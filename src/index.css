@@ -8,54 +8,53 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 210 10% 23%;
+    /* Modern Professional Theme */
+    --background: 210 40% 98%;
+    /* Slate-50 #F8FAFC */
+    --foreground: 222 47% 11%;
+    /* Slate-900 #0F172A */
 
     --card: 0 0% 100%;
-    --card-foreground: 210 10% 23%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 23%;
+    --popover-foreground: 222 47% 11%;
 
-    /* LinkedIn Blue */
-    --primary: 201 100% 35%;
-    --primary-foreground: 0 0% 100%;
-    
-    --primary-hover: 201 100% 30%;
+    --primary: 243 75% 59%;
+    /* Indigo-600 #4F46E5 */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 17% 95%;
-    --secondary-foreground: 210 10% 23%;
+    --primary-hover: 243 75% 50%;
 
-    --muted: 210 17% 95%;
-    --muted-foreground: 210 10% 55%;
+    --secondary: 210 40% 96.1%;
+    /* Slate-100 */
+    --secondary-foreground: 222 47% 11%;
 
-    --accent: 201 100% 35%;
-    --accent-foreground: 0 0% 100%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 262 83% 58%;
+    /* Violet-600 #7C3AED */
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 201 100% 35%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    /* More rounded */
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 243 75% 59%;
   }
 
   .dark {
@@ -70,7 +69,7 @@ All colors MUST be HSL.
 
     --primary: 201 100% 35%;
     --primary-foreground: 0 0% 100%;
-    
+
     --primary-hover: 201 100% 30%;
 
     --secondary: 210 10% 18%;
@@ -107,8 +106,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-poppins;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold;
   }
 }

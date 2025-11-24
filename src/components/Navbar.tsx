@@ -1,24 +1,68 @@
-import { Link, useLocation } from "react-router-dom";
-import { Briefcase } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Briefcase, User, LogOut, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { getPerfilUsuario } from "@/services/api";
 
 const Navbar = () => {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
   const isActive = (path: string) => location.pathname === path;
-  
+
+  useEffect(() => {
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user?.email) {
+        getPerfilUsuario(session.user.email).then(setUserProfile);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user?.email) {
+        getPerfilUsuario(session.user.email).then(setUserProfile);
+      } else {
+        setUserProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente.",
+    });
+    navigate("/login");
+  };
+
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
+    <nav className="bg-white/70 backdrop-blur-md border-b border-border/50 sticky top-0 z-50 shadow-sm transition-all duration-300">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity">
-            <Briefcase className="h-7 w-7" />
-            <span className="text-2xl font-bold">SkillLink</span>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="bg-primary/10 p-2 rounded-lg group-hover:bg-primary/20 transition-colors">
+              <Briefcase className="h-6 w-6 text-primary" />
+            </div>
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              SkillLink
+            </span>
           </Link>
-          
+
           <div className="flex items-center gap-4">
             <Link to="/">
-              <Button 
+              <Button
                 variant={isActive("/") ? "default" : "ghost"}
                 className="font-medium"
               >
@@ -26,29 +70,86 @@ const Navbar = () => {
               </Button>
             </Link>
             <Link to="/categorias">
-              <Button 
+              <Button
                 variant={isActive("/categorias") ? "default" : "ghost"}
                 className="font-medium"
               >
                 Categorías
               </Button>
             </Link>
-            <Link to="/publicar">
-              <Button 
-                variant={isActive("/publicar") ? "default" : "ghost"}
-                className="font-medium"
-              >
-                Publicar
-              </Button>
-            </Link>
-            <Link to="/perfil">
-              <Button 
-                variant={isActive("/perfil") ? "default" : "ghost"}
-                className="font-medium"
-              >
-                Mi Perfil
-              </Button>
-            </Link>
+
+            {user ? (
+              <>
+                {userProfile?.tipo === 'Trabajador' && (
+                  <>
+                    <Link to="/publicar">
+                      <Button
+                        variant={isActive("/publicar") ? "default" : "ghost"}
+                        className="font-medium"
+                      >
+                        Publicar
+                      </Button>
+                    </Link>
+                    <Link to="/mis-servicios">
+                      <Button
+                        variant={isActive("/mis-servicios") ? "default" : "ghost"}
+                        className="font-medium"
+                      >
+                        Mis Servicios
+                      </Button>
+                    </Link>
+                  </>
+                )}
+                <Link to="/mensajes">
+                  <Button
+                    variant={isActive("/mensajes") ? "default" : "ghost"}
+                    className="font-medium"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Mensajes
+                  </Button>
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="font-medium">
+                      <User className="mr-2 h-4 w-4" />
+                      Mi Perfil
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate("/perfil")}>
+                      Ver Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/perfil/editar")}>
+                      Editar Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar Sesión
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button
+                    variant={isActive("/login") ? "default" : "ghost"}
+                    className="font-medium"
+                  >
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button
+                    variant="default"
+                    className="font-medium"
+                  >
+                    Registrarse
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -8,24 +8,46 @@ import Categorias from "./pages/Categorias";
 import Perfil from "./pages/Perfil";
 import Publicar from "./pages/Publicar";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import PublicProfile from "./pages/PublicProfile";
+import EditProfile from "./pages/EditProfile";
+import ServiceDetails from "./pages/ServiceDetails";
+import Inbox from "./pages/Inbox";
+import Plans from "./pages/Plans";
+import MisServicios from "./pages/MisServicios";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/categorias" element={<Categorias />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/publicar" element={<Publicar />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/categorias" element={<Categorias />} />
+            <Route path="/servicio/:id" element={<ServiceDetails />} />
+            <Route path="/profesional/:id" element={<PublicProfile />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/perfil/editar" element={<EditProfile />} />
+              <Route path="/publicar" element={<Publicar />} />
+              <Route path="/mensajes" element={<Inbox />} />
+              <Route path="/planes" element={<Plans />} />
+              <Route path="/mis-servicios" element={<MisServicios />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
