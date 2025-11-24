@@ -27,8 +27,8 @@ SELECT
     id_persona,
     p_nombre,
     ap_paterno,
-    tipo,
-    comuna
+    email,
+    tipo
 FROM persona 
 ORDER BY id_persona 
 LIMIT 10;
