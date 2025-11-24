@@ -298,15 +298,14 @@ USING (
     -- El cliente puede ver sus solicitudes
     EXISTS (
         SELECT 1 FROM persona p
-        WHERE p.id_persona = solicitud_servicio.cliente_id_persona
+        WHERE p.id_persona = solicitud_servicio.id_cliente
         AND p.email = auth.email()
     )
     OR
     -- El trabajador puede ver solicitudes de sus servicios
     EXISTS (
-        SELECT 1 FROM trabajador t
-        JOIN persona p ON t.id_persona = p.id_persona
-        WHERE t.id_trabajador = solicitud_servicio.id_trabajador
+        SELECT 1 FROM persona p
+        WHERE p.id_persona = solicitud_servicio.id_trabajador
         AND p.email = auth.email()
     )
 );
@@ -317,7 +316,7 @@ ON solicitud_servicio FOR INSERT
 WITH CHECK (
     EXISTS (
         SELECT 1 FROM persona p
-        WHERE p.id_persona = solicitud_servicio.cliente_id_persona
+        WHERE p.id_persona = solicitud_servicio.id_cliente
         AND p.email = auth.email()
     )
 );
@@ -327,17 +326,15 @@ CREATE POLICY "Workers can update solicitudes status"
 ON solicitud_servicio FOR UPDATE
 USING (
     EXISTS (
-        SELECT 1 FROM trabajador t
-        JOIN persona p ON t.id_persona = p.id_persona
-        WHERE t.id_trabajador = solicitud_servicio.id_trabajador
+        SELECT 1 FROM persona p
+        WHERE p.id_persona = solicitud_servicio.id_trabajador
         AND p.email = auth.email()
     )
 )
 WITH CHECK (
     EXISTS (
-        SELECT 1 FROM trabajador t
-        JOIN persona p ON t.id_persona = p.id_persona
-        WHERE t.id_trabajador = solicitud_servicio.id_trabajador
+        SELECT 1 FROM persona p
+        WHERE p.id_persona = solicitud_servicio.id_trabajador
         AND p.email = auth.email()
     )
 );
