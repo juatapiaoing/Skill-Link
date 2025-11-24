@@ -16,6 +16,8 @@ import ServiceDetails from "./pages/ServiceDetails";
 import Inbox from "./pages/Inbox";
 import Plans from "./pages/Plans";
 import MisServicios from "./pages/MisServicios";
+import ClientProfile from "./pages/ClientProfile";
+import MisSolicitudes from "./pages/MisSolicitudes";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -38,6 +40,8 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/perfil/editar" element={<EditProfile />} />
+              <Route path="/perfil-cliente" element={<ClientProfile />} />
+              <Route path="/mis-solicitudes" element={<MisSolicitudes />} />
               <Route path="/publicar" element={<Publicar />} />
               <Route path="/mensajes" element={<Inbox />} />
               <Route path="/planes" element={<Plans />} />

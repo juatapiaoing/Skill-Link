@@ -6,6 +6,9 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getPerfilUsuario } from "@/services/api";
+import { getUnreadNotifications } from "@/services/clientApi";
+import { useQuery } from "@tanstack/react-query";
+import NotificationBadge from "@/components/NotificationBadge";
 
 const Navbar = () => {
   const location = useLocation();
@@ -46,6 +49,16 @@ const Navbar = () => {
     });
     navigate("/login");
   };
+
+  // Get unread notifications count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unreadNotifications', userProfile?.id, userProfile?.tipo],
+    queryFn: () => userProfile?.id && userProfile?.tipo
+      ? getUnreadNotifications(userProfile.id, userProfile.tipo)
+      : Promise.resolve(0),
+    enabled: !!userProfile?.id && !!userProfile?.tipo,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   return (
     <nav className="bg-white/70 backdrop-blur-md border-b border-border/50 sticky top-0 z-50 shadow-sm transition-all duration-300">
@@ -100,20 +113,34 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
-                <Link to="/mensajes">
+                {userProfile?.tipo === 'Cliente' && (
+                  <Link to="/mis-solicitudes">
+                    <Button
+                      variant={isActive("/mis-solicitudes") ? "default" : "ghost"}
+                      className="font-medium"
+                    >
+                      Mis Solicitudes
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/inbox" className="relative">
                   <Button
-                    variant={isActive("/mensajes") ? "default" : "ghost"}
+                    variant={isActive("/inbox") ? "default" : "ghost"}
                     className="font-medium"
                   >
-                    <MessageSquare className="w-4 h-4 mr-2" />
+                    <MessageSquare className="mr-2 h-4 w-4" />
                     Mensajes
+                    {unreadCount > 0 && <NotificationBadge count={unreadCount} />}
                   </Button>
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="font-medium">
+                    <Button
+                      variant={isActive("/perfil") ? "default" : "ghost"}
+                      className="font-medium"
+                    >
                       <User className="mr-2 h-4 w-4" />
-                      Mi Perfil
+                      Perfil
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

@@ -123,10 +123,7 @@ export const getCategoriasDestacadas = async (): Promise<Categoria[]> => {
 export const getPerfilUsuario = async (email: string): Promise<Persona | null> => {
     const { data, error } = await supabase
         .from('persona')
-        .select(`
-            *,
-            trabajador:trabajador(id_trabajador)
-        `)
+        .select('*')
         .eq('email', email)
         .single();
 
@@ -137,11 +134,14 @@ export const getPerfilUsuario = async (email: string): Promise<Persona | null> =
 
     if (!data) return null;
 
-    // Determine role based on existence of trabajador record
-    // Supabase returns an array for one-to-many, or object for one-to-one if specified.
-    // Here we assume standard join which returns array usually unless !inner or single is used on the relation.
-    // But let's be safe.
-    const isTrabajador = data.trabajador && (Array.isArray(data.trabajador) ? data.trabajador.length > 0 : true);
+    // Check if user is a trabajador by querying separately
+    const { data: trabajadorData } = await supabase
+        .from('trabajador')
+        .select('id_trabajador')
+        .eq('id_persona', data.id_persona)
+        .maybeSingle();
+
+    const isTrabajador = !!trabajadorData;
 
     return {
         id: data.id_persona,

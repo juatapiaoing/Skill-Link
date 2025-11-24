@@ -1,32 +1,40 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getServiceDetails, createSolicitud, getPerfilUsuario } from "@/services/api";
+import { getServiceDetails, getPerfilUsuario } from "@/services/api";
+import { hasClientRequestedService } from "@/services/clientApi";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, User, DollarSign, Send } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { Loader2, ArrowLeft, User, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import ContactModal from "@/components/ContactModal";
 
 const ServiceDetails = () => {
     const { id } = useParams<{ id: string }>();
     console.log("ServiceDetails ID:", id);
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { toast } = useToast();
-    const [message, setMessage] = useState("");
-    const [sending, setSending] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [contactModalOpen, setContactModalOpen] = useState(false);
 
     const { data: service, isLoading, error } = useQuery({
         queryKey: ['service', id],
         queryFn: () => getServiceDetails(id!),
         enabled: !!id
+    });
+
+    const { data: userProfile } = useQuery({
+        queryKey: ['userProfile', user?.email],
+        queryFn: () => user?.email ? getPerfilUsuario(user.email) : null,
+        enabled: !!user?.email
+    });
+
+    const { data: hasRequested = false } = useQuery({
+        queryKey: ['hasRequested', userProfile?.id, service?.id],
+        queryFn: () => hasClientRequestedService(userProfile!.id, service!.id),
+        enabled: !!userProfile?.id && !!service?.id && userProfile?.tipo === 'Cliente'
     });
 
     if (isLoading) {
@@ -120,76 +128,23 @@ const ServiceDetails = () => {
                                             >
                                                 Ver Perfil Completo
                                             </Button>
-                                            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                                                <DialogTrigger asChild>
-                                                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                        Contactar Profesional
-                                                    </Button>
-                                                </DialogTrigger>
-                                                {/* Dialog Content remains the same, just wrapped */}
-                                                <DialogContent className="sm:max-w-[425px]">
-                                                    <DialogHeader>
-                                                        <DialogTitle>Contactar a {service.trabajadorNombre}</DialogTitle>
-                                                        <DialogDescription>
-                                                            Envía un mensaje para solicitar este servicio. El profesional te responderá a la brevedad.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className="grid gap-4 py-4">
-                                                        <Textarea
-                                                            placeholder="Hola, me interesa tu servicio de..."
-                                                            value={message}
-                                                            onChange={(e) => setMessage(e.target.value)}
-                                                            rows={4}
-                                                        />
-                                                    </div>
-                                                    <DialogFooter>
-                                                        <Button type="submit" onClick={async () => {
-                                                            if (!user) {
-                                                                toast({
-                                                                    title: "Error",
-                                                                    description: "Debes iniciar sesión para contactar.",
-                                                                    variant: "destructive"
-                                                                });
-                                                                return;
-                                                            }
-                                                            if (!message.trim()) return;
-
-                                                            setSending(true);
-                                                            try {
-                                                                // Get current user profile ID
-                                                                const currentUserProfile = await getPerfilUsuario(user.email || "");
-                                                                if (!currentUserProfile) throw new Error("Perfil no encontrado");
-
-                                                                await createSolicitud({
-                                                                    servicioId: service.id,
-                                                                    clienteId: currentUserProfile.id,
-                                                                    trabajadorId: service.trabajadorId,
-                                                                    mensaje: message
-                                                                });
-
-                                                                toast({
-                                                                    title: "Solicitud enviada",
-                                                                    description: "Tu mensaje ha sido enviado exitosamente."
-                                                                });
-                                                                setDialogOpen(false);
-                                                                setMessage("");
-                                                            } catch (error) {
-                                                                console.error(error);
-                                                                toast({
-                                                                    title: "Error",
-                                                                    description: "No se pudo enviar la solicitud.",
-                                                                    variant: "destructive"
-                                                                });
-                                                            } finally {
-                                                                setSending(false);
-                                                            }
-                                                        }} disabled={sending}>
-                                                            {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                                            Enviar Mensaje
-                                                        </Button>
-                                                    </DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
+                                            {user && userProfile?.tipo === 'Cliente' && (
+                                                <Button
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                    onClick={() => setContactModalOpen(true)}
+                                                    disabled={hasRequested}
+                                                >
+                                                    {hasRequested ? 'Ya solicitaste este servicio' : 'Contactar Profesional'}
+                                                </Button>
+                                            )}
+                                            {!user && (
+                                                <Button
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                    onClick={() => navigate('/login')}
+                                                >
+                                                    Inicia sesión para contactar
+                                                </Button>
+                                            )}
                                         </>
                                     ) : (
                                         <p className="text-sm text-muted-foreground text-center italic">
@@ -213,6 +168,19 @@ const ServiceDetails = () => {
             </main>
 
             <Footer />
+
+            {/* Contact Modal */}
+            {service && userProfile && (
+                <ContactModal
+                    isOpen={contactModalOpen}
+                    onClose={() => setContactModalOpen(false)}
+                    servicioId={service.id}
+                    servicioNombre={service.titulo}
+                    trabajadorId={service.trabajadorId}
+                    trabajadorNombre={service.trabajadorNombre}
+                    clienteId={userProfile.id}
+                />
+            )}
         </div>
     );
 };
