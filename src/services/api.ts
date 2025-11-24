@@ -66,9 +66,6 @@ export const getTrabajadoresDestacados = async (): Promise<Persona[]> => {
                 p_nombre,
                 ap_paterno,
                 email
-            ),
-            perfil:perfil!perfil_trab_uk_fk (
-                descripcion
             )
         `)
         .order('calificacion_promedio', { ascending: false })
@@ -77,23 +74,34 @@ export const getTrabajadoresDestacados = async (): Promise<Persona[]> => {
 
     if (error) throw new Error(error.message);
 
-    return (data || []).map((t: any) => {
-        const persona = t.persona as any;
-        const perfil = t.perfil as any[];
+    // Fetch perfil data separately for each trabajador
+    const trabajadoresConPerfil = await Promise.all(
+        (data || []).map(async (t: any) => {
+            const persona = t.persona as any;
 
-        return {
-            id: t.id_trabajador,
-            nombre: persona ? `${persona.p_nombre} ${persona.ap_paterno}` : "Usuario",
-            tipo: "Trabajador",
-            comuna: "Santiago",
-            email: persona?.email,
-            foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-            descripcion: perfil?.[0]?.descripcion || "Profesional registrado en SkillLink",
-            verificado: t.verificado || false,
-            calificacionPromedio: t.calificacion_promedio || 0,
-            totalCalificaciones: t.total_calificaciones || 0
-        };
-    });
+            // Get perfil separately to avoid 406 errors
+            const { data: perfilData } = await supabase
+                .from('perfil')
+                .select('descripcion')
+                .eq('trabajador_id_trabajador', t.id_trabajador)
+                .maybeSingle();
+
+            return {
+                id: t.id_trabajador,
+                nombre: persona ? `${persona.p_nombre} ${persona.ap_paterno}` : "Usuario",
+                tipo: "Trabajador",
+                comuna: "Santiago",
+                email: persona?.email,
+                foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
+                descripcion: perfilData?.descripcion || "Profesional registrado en SkillLink",
+                verificado: t.verificado || false,
+                calificacionPromedio: t.calificacion_promedio || 0,
+                totalCalificaciones: t.total_calificaciones || 0
+            };
+        })
+    );
+
+    return trabajadoresConPerfil;
 };
 
 export const getCategoriasDestacadas = async (): Promise<Categoria[]> => {
@@ -290,51 +298,42 @@ export const searchProfessionals = async (query: string, categoryId?: string): P
                 p_nombre,
                 ap_paterno,
                 email
-            ),
-            perfil:perfil!perfil_trab_uk_fk (
-                descripcion,
-                id_categoria
             )
         `);
-
-    // Filter by category if provided
-    if (categoryId && categoryId !== "all") {
-        queryBuilder = supabase
-            .from('trabajador')
-            .select(`
-                id_trabajador,
-                persona:id_persona (
-                    p_nombre,
-                    ap_paterno,
-                    email
-                ),
-                perfil:perfil!perfil_trab_uk_fk!inner (
-                    descripcion,
-                    id_categoria
-                )
-            `)
-            .eq('perfil.id_categoria', categoryId);
-    }
 
     const { data, error } = await queryBuilder;
 
     if (error) throw new Error(error.message);
 
-    let results = (data || []).map((t: any) => {
-        const persona = t.persona as any;
-        const perfil = t.perfil as any[];
-        const perfilData = Array.isArray(perfil) ? perfil[0] : perfil;
+    // Fetch perfil data separately for each trabajador
+    let results = await Promise.all(
+        (data || []).map(async (t: any) => {
+            const persona = t.persona as any;
 
-        return {
-            id: t.id_trabajador,
-            nombre: persona ? `${persona.p_nombre} ${persona.ap_paterno}` : "Usuario",
-            tipo: "Trabajador",
-            comuna: "Santiago",
-            email: persona?.email,
-            foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-            descripcion: perfilData?.descripcion || "Profesional registrado en SkillLink"
-        };
-    });
+            // Get perfil separately to avoid 406 errors
+            const { data: perfilData } = await supabase
+                .from('perfil')
+                .select('descripcion, id_categoria')
+                .eq('trabajador_id_trabajador', t.id_trabajador)
+                .maybeSingle();
+
+            return {
+                id: t.id_trabajador,
+                nombre: persona ? `${persona.p_nombre} ${persona.ap_paterno}` : "Usuario",
+                tipo: "Trabajador",
+                comuna: "Santiago",
+                email: persona?.email,
+                foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
+                descripcion: perfilData?.descripcion || "Profesional registrado en SkillLink",
+                categoriaId: perfilData?.id_categoria
+            };
+        })
+    );
+
+    // Filter by category if provided
+    if (categoryId && categoryId !== "all") {
+        results = results.filter((p: any) => p.categoriaId?.toString() === categoryId);
+    }
 
     // Filter by text query if provided
     if (query) {
@@ -884,9 +883,6 @@ export const getVerifiedWorkers = async () => {
                 p_nombre,
                 ap_paterno,
                 email
-            ),
-            perfil:perfil!perfil_trab_uk_fk (
-                descripcion
             )
         `)
         .eq('verificado', true)
@@ -894,9 +890,33 @@ export const getVerifiedWorkers = async () => {
         .order('total_calificaciones', { ascending: false })
         .limit(8);
 
-
     if (error) throw new Error(error.message);
-    return data;
+
+    // Fetch perfil data separately for each trabajador
+    const trabajadoresConPerfil = await Promise.all(
+        (data || []).map(async (t: any) => {
+            const persona = t.persona as any;
+
+            // Get perfil separately to avoid 406 errors
+            const { data: perfilData } = await supabase
+                .from('perfil')
+                .select('descripcion')
+                .eq('trabajador_id_trabajador', t.id_trabajador)
+                .maybeSingle();
+
+            return {
+                id_trabajador: t.id_trabajador,
+                id_persona: t.id_persona,
+                verificado: t.verificado,
+                calificacion_promedio: t.calificacion_promedio,
+                total_calificaciones: t.total_calificaciones,
+                persona: persona,
+                perfil: perfilData
+            };
+        })
+    );
+
+    return trabajadoresConPerfil;
 };
 
 // --- Service Management ---
