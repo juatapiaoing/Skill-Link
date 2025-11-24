@@ -30,6 +30,32 @@ DROP POLICY IF EXISTS "Workers can insert own servicio" ON servicio;
 DROP POLICY IF EXISTS "Workers can manage own portafolio" ON portafolio;
 DROP POLICY IF EXISTS "Workers can manage own certificacion" ON certificacion;
 
+-- Eliminar políticas del script de producción si existen
+DROP POLICY IF EXISTS "Public read categoria_servicio" ON categoria_servicio;
+DROP POLICY IF EXISTS "Public read active servicio" ON servicio;
+DROP POLICY IF EXISTS "Public read servicio_categoria" ON servicio_categoria_servicio;
+DROP POLICY IF EXISTS "Public read trabajador_servicio" ON trabajador_servicio;
+DROP POLICY IF EXISTS "Public read trabajador" ON trabajador;
+DROP POLICY IF EXISTS "Public read perfil" ON perfil;
+DROP POLICY IF EXISTS "Public read persona" ON persona;
+DROP POLICY IF EXISTS "Public read portafolio" ON portafolio;
+DROP POLICY IF EXISTS "Public read certificacion" ON certificacion;
+DROP POLICY IF EXISTS "Users can update own persona" ON persona;
+DROP POLICY IF EXISTS "Users can insert own persona" ON persona;
+DROP POLICY IF EXISTS "Workers can update own perfil" ON perfil;
+DROP POLICY IF EXISTS "Workers can insert own perfil" ON perfil;
+DROP POLICY IF EXISTS "Workers can insert servicio" ON servicio;
+DROP POLICY IF EXISTS "Workers can update own servicio" ON servicio;
+DROP POLICY IF EXISTS "Workers can delete own servicio" ON servicio;
+DROP POLICY IF EXISTS "Workers can insert own trabajador_servicio" ON trabajador_servicio;
+DROP POLICY IF EXISTS "Workers can delete own trabajador_servicio" ON trabajador_servicio;
+DROP POLICY IF EXISTS "Workers can manage servicio_categoria" ON servicio_categoria_servicio;
+DROP POLICY IF EXISTS "Workers can manage own portafolio" ON portafolio;
+DROP POLICY IF EXISTS "Workers can manage own certificacion" ON certificacion;
+DROP POLICY IF EXISTS "Users can read own solicitudes" ON solicitud_servicio;
+DROP POLICY IF EXISTS "Clients can insert solicitudes" ON solicitud_servicio;
+DROP POLICY IF EXISTS "Workers can update solicitudes status" ON solicitud_servicio;
+
 -- ============================================
 -- 2. HABILITAR RLS EN TODAS LAS TABLAS
 -- ============================================
