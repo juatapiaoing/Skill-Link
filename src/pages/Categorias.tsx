@@ -3,14 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getCategorias, getServicios } from "@/services/api";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 const Categorias = () => {
   const navigate = useNavigate();
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: categorias = [], isLoading: loadingCategorias } = useQuery({
     queryKey: ['categorias'],
@@ -22,9 +25,23 @@ const Categorias = () => {
     queryFn: getServicios
   });
 
-  const serviciosFiltrados = categoriaSeleccionada
-    ? servicios.filter(s => s.categoria === categoriaSeleccionada)
-    : servicios;
+  // Apply filters
+  let serviciosFiltrados = servicios;
+
+  // Filter by category
+  if (categoriaSeleccionada && categoriaSeleccionada !== "all") {
+    serviciosFiltrados = serviciosFiltrados.filter(s => s.categoria === categoriaSeleccionada);
+  }
+
+  // Filter by search query
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    serviciosFiltrados = serviciosFiltrados.filter(s =>
+      s.titulo.toLowerCase().includes(query) ||
+      s.descripcion.toLowerCase().includes(query) ||
+      s.trabajadorNombre.toLowerCase().includes(query)
+    );
+  }
 
   if (loadingCategorias || loadingServicios) {
     return (
@@ -48,24 +65,79 @@ const Categorias = () => {
             <h1 className="text-4xl font-bold mb-2 text-center text-foreground">
               Explora Servicios por Categoría
             </h1>
-            <p className="text-muted-foreground text-center mb-12 text-lg">
+            <p className="text-muted-foreground text-center mb-8 text-lg">
               Encuentra profesionales especializados en diferentes áreas
             </p>
 
-            {/* Filtro Activo */}
-            {categoriaSeleccionada && (
-              <div className="mb-6 flex items-center justify-between bg-primary/10 border border-primary/20 rounded-lg p-4">
-                <p className="text-foreground font-medium">
-                  Mostrando servicios de: <span className="text-primary font-semibold">{categoriaSeleccionada}</span>
-                </p>
-                <button
-                  onClick={() => setCategoriaSeleccionada(null)}
-                  className="text-primary hover:text-primary-hover font-medium"
-                >
-                  Limpiar filtro
-                </button>
+            {/* Search and Filter Section */}
+            <div className="mb-8 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar servicios, profesionales..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {/* Category Filter */}
+                <Select value={categoriaSeleccionada} onValueChange={setCategoriaSeleccionada}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las categorías" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las categorías</SelectItem>
+                    {categorias.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.nombre}>
+                        {cat.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+
+              {/* Active Filters Display */}
+              {(categoriaSeleccionada !== "all" || searchQuery.trim()) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-muted-foreground">Filtros activos:</span>
+                  {categoriaSeleccionada !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      {categoriaSeleccionada}
+                      <button
+                        onClick={() => setCategoriaSeleccionada("all")}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
+                  {searchQuery.trim() && (
+                    <Badge variant="secondary" className="gap-1">
+                      Búsqueda: "{searchQuery}"
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
+                  <button
+                    onClick={() => {
+                      setCategoriaSeleccionada("all");
+                      setSearchQuery("");
+                    }}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Limpiar todo
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Servicios Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

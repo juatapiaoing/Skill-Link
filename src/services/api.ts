@@ -97,7 +97,7 @@ export const getTrabajadoresDestacados = async (): Promise<Persona[]> => {
                 verificado: t.verificado || false,
                 calificacionPromedio: t.calificacion_promedio || 0,
                 totalCalificaciones: t.total_calificaciones || 0
-            };
+            } as Persona;
         })
     );
 
